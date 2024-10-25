@@ -4,11 +4,9 @@ use crate::{
     config::StConfig,
     constants::{GIT_DIR, ST_CTX_FILE_NAME},
     errors::{StError, StResult},
-    git::RepositoryExt,
     tree::StackTree,
 };
 use git2::{BranchType, Repository};
-use octocrab::Octocrab;
 use std::path::PathBuf;
 
 mod actions;
