@@ -3,7 +3,7 @@
 use crate::{constants::ST_CFG_FILE_NAME, errors::StResult};
 use nu_ansi_term::Color;
 use serde::{Deserialize, Serialize};
-use std::{fs, io, path::PathBuf};
+use std::{fs, io, path::PathBuf, process::Command};
 use thiserror::Error;
 
 pub(crate) const DEFAULT_CONFIG_PRETTY: &str = r#"# GitHub personal access token. Used for pushing branches to GitHub remotes as well as querying
@@ -25,8 +25,9 @@ pub struct StConfig {
 impl StConfig {
     /// Loads the configuration from disk.
     pub fn try_load() -> Result<Option<Self>, StConfigError> {
+        // Load the default config file from disk
         let config_path = PathBuf::from(env!("HOME")).join(ST_CFG_FILE_NAME);
-        match std::fs::read_to_string(&config_path) {
+        let file_config = match std::fs::read_to_string(config_path) {
             Ok(contents) => match toml::from_str(&contents) {
                 Ok(config) => Ok(Some(config)),
                 Err(e) => Err(StConfigError::FailedToLoad(io::Error::new(
@@ -35,6 +36,30 @@ impl StConfig {
                 ))),
             },
             Err(_) => Ok(None),
+        };
+
+        // If file config failed or doesn't exist, attempt to get the token from gh CLI
+        if let Ok(None) = file_config {
+            // Try to get token from gh CLI
+            match Command::new("gh").args(["auth", "token"]).output() {
+                Ok(output) => {
+                    if output.status.success() {
+                        if let Ok(token) = String::from_utf8(output.stdout) {
+                            let token = token.trim().to_string();
+                            if !token.is_empty() {
+                                // Create new config with the token
+                                return Ok(Some(Self {
+                                    github_token: token,
+                                }));
+                            }
+                        }
+                    }
+                    Ok(None)
+                }
+                Err(_) => Ok(None),
+            }
+        } else {
+            file_config
         }
     }
 
