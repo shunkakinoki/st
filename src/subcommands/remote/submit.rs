@@ -34,8 +34,7 @@ impl SubmitCmd {
 
         // Perform pre-flight checks.
         println!("🔍 Checking for closed pull requests...");
-        self.pre_flight(&mut ctx, &stack, &mut pulls)
-            .await?;
+        self.pre_flight(&mut ctx, &stack, &mut pulls).await?;
 
         // Submit the stack.
         println!(
