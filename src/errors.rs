@@ -29,6 +29,9 @@ pub enum StError {
         Color::Blue.paint("st restack")
     )]
     NeedsRestack(String),
+    /// A commit message is required with --all or --update
+    #[error("Commit message is required with --all or --update")]
+    CommitMessageRequired,
     /// The working tree is dirty.
     #[error("Working tree is dirty. Please commit or stash changes before continuing.")]
     WorkingTreeDirty,
