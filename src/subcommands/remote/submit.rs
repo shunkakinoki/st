@@ -195,8 +195,10 @@ impl SubmitCmd {
                 }
 
                 // Update the tracked branch with the remote information.
-                tracked_branch.remote =
-                    Some(RemoteMetadata::new(pr_info.number, target_remote_name));
+                tracked_branch.remote = Some(RemoteMetadata::new(
+                    pr_info.number,
+                    Some(target_remote_name),
+                ));
 
                 // Print success message.
                 let pr_link = format!(
