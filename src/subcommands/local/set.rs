@@ -39,6 +39,7 @@ impl SetCmd {
                     prompt_for_remote_name(ctx.repository)?
                 };
 
+                // If the new remote name is the same as the current remote name, do nothing
                 if new_remote_name == ctx.tree.remote_name {
                     return Ok(());
                 } else {
