@@ -20,7 +20,7 @@ impl SyncCmd {
         let gh_client = Octocrab::builder()
             .personal_token(ctx.cfg.github_token.clone())
             .build()?;
-        let (owner, repo) = ctx.owner_and_repository()?;
+        let (owner, repo) = ctx.owner_and_repository(ctx.tree.remote_name.clone())?;
         let mut pulls = gh_client.pulls(&owner, &repo);
 
         // Perform pre-flight checks.

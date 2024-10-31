@@ -73,11 +73,9 @@ impl<'a> StContext<'a> {
     }
 
     /// Parses the GitHub owner and repository from the current repository's remote URL.
-    pub fn owner_and_repository(&self) -> StResult<(String, String)> {
-        let remote = self.repository.find_remote(&self.tree.remote_name)?;
-        let url = remote
-            .url()
-            .ok_or(StError::RemoteNotFound(self.tree.remote_name.clone()))?;
+    pub fn owner_and_repository(&self, remote_name: String) -> StResult<(String, String)> {
+        let remote = self.repository.find_remote(&remote_name)?;
+        let url = remote.url().ok_or(StError::RemoteNotFound(remote_name))?;
 
         let (org, repo) = if url.starts_with("git@") {
             // Handle SSH URL: git@github.com:org/repo.git

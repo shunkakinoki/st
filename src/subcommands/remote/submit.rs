@@ -26,7 +26,7 @@ impl SubmitCmd {
         let gh_client = Octocrab::builder()
             .personal_token(ctx.cfg.github_token.clone())
             .build()?;
-        let (owner, repo) = ctx.owner_and_repository()?;
+        let (owner, repo) = ctx.owner_and_repository(ctx.tree.remote_name.clone())?;
         let mut pulls = gh_client.pulls(&owner, &repo);
         let mut issues = gh_client.issues(&owner, &repo);
 
@@ -102,7 +102,21 @@ impl SubmitCmd {
         for (i, branch) in stack.iter().enumerate().skip(1) {
             let parent = &stack[i - 1];
 
+            // Get the remote to push.
             let remote_name = ctx.tree.remote_name.clone();
+
+            // Determine the target `head` remote.
+            let target_remote_name = Self::determine_target_pr_remote(ctx, branch)?;
+
+            // Get the tracked branch.
+            let (target_owner, _) = ctx.owner_and_repository(target_remote_name.clone())?;
+
+            // Parse the base branch.
+            let base_parent = if target_remote_name.is_empty() {
+                parent.clone()
+            } else {
+                format!("{}:{}", target_owner, parent)
+            };
 
             let tracked_branch = ctx
                 .tree
@@ -120,7 +134,7 @@ impl SubmitCmd {
                     // Update the PR base.
                     pulls
                         .update(remote_meta.pr_number)
-                        .base(parent)
+                        .base(base_parent)
                         .send()
                         .await?;
                     println!(
@@ -165,7 +179,7 @@ impl SubmitCmd {
 
                 // Submit PR.
                 let pr_info = pulls
-                    .create(metadata.title, branch, parent)
+                    .create(metadata.title, branch, base_parent)
                     .body(metadata.body)
                     .draft(metadata.is_draft)
                     .send()
@@ -199,6 +213,29 @@ impl SubmitCmd {
         Ok(())
     }
 
+    /// Deteremines the target remote for submitting the stack.
+    ///
+    /// 1. If one of the children of the current branch is already submitted as a PR, use the remote name associated with that PR.
+    /// 2. Otherwise, check if the repository is a fork of the default remote. If so, use that remote name.
+    /// 3. Otherwise, use the default remote name.
+    fn determine_target_pr_remote(ctx: &StContext<'_>, branch: &String) -> StResult<String> {
+        // Get the children of the current branch.
+        if let Some(tracked_branch) = ctx.tree.branches.get(branch) {
+            // If any children have PRs, use their remote name.
+            if let Some(Some(remote_name)) = tracked_branch.children.iter().find_map(|child| {
+                ctx.tree
+                    .branches
+                    .get(child)
+                    .and_then(|b| b.remote.as_ref())
+                    .map(|r| &r.remote_name)
+            }) {
+                return Ok(remote_name.clone());
+            }
+        }
+
+        Ok(String::new())
+    }
+
     /// Updates the comments on a PR with the current stack information.
     async fn update_pr_comments(
         &self,
@@ -207,20 +244,25 @@ impl SubmitCmd {
         stack: &[String],
     ) -> StResult<()> {
         for branch in stack.iter().skip(1) {
-            let tracked_branch = ctx
-                .tree
-                .get_mut(branch)
-                .ok_or_else(|| StError::BranchNotTracked(branch.to_string()))?;
+            // First, get the necessary data from the tracked branch
+            let (pr_number, comment_id) = {
+                let tracked_branch = ctx
+                    .tree
+                    .get(branch)
+                    .ok_or_else(|| StError::BranchNotTracked(branch.to_string()))?;
 
-            // Skip branches that are not submitted as PRs.
-            let Some(remote_meta) = tracked_branch.remote else {
-                continue;
+                // Skip branches that are not submitted as PRs
+                let Some(remote_meta) = &tracked_branch.remote else {
+                    continue;
+                };
+
+                (remote_meta.pr_number, remote_meta.comment_id)
             };
 
-            // If the PR has been submitted, update the comment.
-            // If the PR is new, create a new comment.
-            let rendered_comment = Self::render_pr_comment(ctx, branch, stack)?;
-            match remote_meta.comment_id {
+            // Render the comment
+            let rendered_comment = { Self::render_pr_comment(ctx, branch, stack)? };
+
+            match comment_id {
                 Some(id) => {
                     // Update the existing comment.
                     issue_handler
@@ -230,7 +272,7 @@ impl SubmitCmd {
                 None => {
                     // Create a new comment.
                     let comment_info = issue_handler
-                        .create_comment(remote_meta.pr_number, rendered_comment)
+                        .create_comment(pr_number, rendered_comment)
                         .await?;
 
                     // Get a new mutable reference to the branch and update the comment ID.
@@ -297,7 +339,7 @@ impl SubmitCmd {
                 .tree
                 .get(branch)
                 .ok_or_else(|| StError::BranchNotTracked(branch.to_string()))?;
-            if let Some(remote) = tracked_branch.remote {
+            if let Some(remote) = &tracked_branch.remote {
                 comment.push_str(&format!(
                     "* #{}{}\n",
                     remote.pr_number,

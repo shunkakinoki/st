@@ -14,7 +14,7 @@ use std::collections::{HashMap, HashSet};
 #[derive(Default, Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct StackTree {
-    /// The name of the remote.
+    /// The name of the remote to pull/push the stack to.
     #[serde(default = "default_remote_name")]
     pub remote_name: String,
     /// The name of the trunk branch.
@@ -232,11 +232,14 @@ impl TrackedBranch {
 }
 
 /// Remote metadata for a branch that is tracked by `st`.
-#[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct RemoteMetadata {
     /// The number of the pull request on GitHub associated with the branch.
     pub(crate) pr_number: u64,
+    /// The name of the remote that the pull request is associated with.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) remote_name: Option<String>,
     /// The comment ID of the stack status comment on the pull request.
     ///
     /// This is used to update the comment with the latest stack status each time the stack
@@ -249,6 +252,7 @@ impl RemoteMetadata {
     pub fn new(pr_number: u64) -> Self {
         Self {
             pr_number,
+            remote_name: None,
             comment_id: None,
         }
     }

@@ -19,8 +19,6 @@ impl StatusCmd {
         let gh_client = Octocrab::builder()
             .personal_token(ctx.cfg.github_token.clone())
             .build()?;
-        let (owner, repo) = ctx.owner_and_repository()?;
-        let pulls = gh_client.pulls(&owner, &repo);
 
         let current_stack = ctx.discover_stack()?;
 
@@ -46,6 +44,15 @@ impl StatusCmd {
             });
 
             if let Some(remote) = &tracked_branch.remote {
+                let (owner, repo) = ctx.owner_and_repository(
+                    remote
+                        .remote_name
+                        .as_ref()
+                        .unwrap_or(&ctx.tree.remote_name)
+                        .clone(),
+                )?;
+                let pulls = gh_client.pulls(&owner, &repo);
+
                 let pr_info = pulls.get(remote.pr_number).await?;
                 let is_draft = pr_info.draft.unwrap_or_default();
                 let is_merged = pr_info.merged_at.is_some();

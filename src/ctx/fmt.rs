@@ -85,8 +85,14 @@ impl StContext<'_> {
             };
             let pull_request = current
                 .remote
+                .as_ref()
                 .map(|r| {
-                    let (owner, repo) = self.owner_and_repository()?;
+                    let (owner, repo) = self.owner_and_repository(
+                        r.remote_name
+                            .as_ref()
+                            .unwrap_or(&self.tree.remote_name)
+                            .clone(),
+                    )?;
                     Ok::<_, StError>(Color::Purple.italic().paint(format!(
                         "https://github.com/{}/{}/pull/{}",
                         owner, repo, r.pr_number
