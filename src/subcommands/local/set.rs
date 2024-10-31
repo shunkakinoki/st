@@ -41,6 +41,8 @@ impl SetCmd {
 
                 if new_remote_name == ctx.tree.remote_name {
                     return Ok(());
+                } else {
+                    ctx.tree.remote_name = new_remote_name;
                 }
 
                 // Reset tracked branches
