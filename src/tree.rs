@@ -15,11 +15,16 @@ use std::collections::{HashMap, HashSet};
 #[serde(rename_all = "kebab-case")]
 pub struct StackTree {
     /// The name of the remote.
+    #[serde(default = "default_remote_name")]
     pub remote_name: String,
     /// The name of the trunk branch.
     pub trunk_name: String,
     /// A map of branch names to [TrackedBranch]es.
     pub branches: HashMap<String, TrackedBranch>,
+}
+
+fn default_remote_name() -> String {
+    "origin".to_string()
 }
 
 impl StackTree {
