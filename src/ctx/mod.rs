@@ -31,8 +31,6 @@ pub fn ctx_path(repository: &Repository) -> Option<PathBuf> {
 pub struct StContext<'a> {
     /// The global configuration for `st`.
     pub cfg: StConfig,
-    /// The remote name associated with the current context.
-    pub remote_name: Option<String>,
     /// The repository associated with the store.
     pub repository: &'a Repository,
     /// The tree of branches tracked by `st`.
@@ -41,12 +39,16 @@ pub struct StContext<'a> {
 
 impl<'a> StContext<'a> {
     /// Creates a fresh [StContext] with the given [Repository] and trunk branch name.
-    pub fn fresh(cfg: StConfig, repository: &'a Repository, trunk: String) -> Self {
+    pub fn fresh(
+        cfg: StConfig,
+        repository: &'a Repository,
+        remote_name: String,
+        trunk: String,
+    ) -> Self {
         Self {
             cfg,
             repository,
-            remote_name: None,
-            tree: StackTree::new(trunk),
+            tree: StackTree::new(remote_name, trunk),
         }
     }
 
@@ -63,7 +65,6 @@ impl<'a> StContext<'a> {
         let mut store_with_repo = Self {
             cfg,
             repository,
-            remote_name: None,
             tree: stack,
         };
         store_with_repo.prune()?;
@@ -73,12 +74,10 @@ impl<'a> StContext<'a> {
 
     /// Parses the GitHub owner and repository from the current repository's remote URL.
     pub fn owner_and_repository(&self) -> StResult<(String, String)> {
-        let remote_name = self.remote_name.clone().unwrap_or("origin".to_string());
-
-        let remote = self.repository.find_remote(&remote_name)?;
+        let remote = self.repository.find_remote(&self.tree.remote_name)?;
         let url = remote
             .url()
-            .ok_or(StError::RemoteNotFound(remote_name.clone()))?;
+            .ok_or(StError::RemoteNotFound(self.tree.remote_name.clone()))?;
 
         let (org, repo) = if url.starts_with("git@") {
             // Handle SSH URL: git@github.com:org/repo.git
@@ -125,16 +124,6 @@ impl<'a> StContext<'a> {
             }
             Ok::<_, StError>(())
         })
-    }
-
-    /// Gets all of the remote names in the stack.
-    pub fn remote_names(&self) -> StResult<Vec<String>> {
-        self.tree.remote_names()
-    }
-
-    /// Overwrites the remote name associated with the current context.
-    pub fn set_remote_name(&mut self, remote_name: Option<String>) {
-        self.remote_name = remote_name;
     }
 }
 

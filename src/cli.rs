@@ -73,6 +73,10 @@ impl Cli {
             Blue.paint("st")
         );
 
+        // Ask the user to specify the remote name for the repository.
+        // The default is "origin".
+        let remote_name = Select::new(&setup_message, vec!["origin".to_string()]).prompt()?;
+
         // Ask the user to specify the trunk branch of the repository.
         // The trunk branch must be a local branch.
         let branches = repo
@@ -92,7 +96,7 @@ impl Cli {
             Blue.paint("st")
         );
 
-        Ok(StContext::fresh(config, repo, trunk_branch))
+        Ok(StContext::fresh(config, repo, remote_name, trunk_branch))
     }
 }
 

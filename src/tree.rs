@@ -14,6 +14,8 @@ use std::collections::{HashMap, HashSet};
 #[derive(Default, Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct StackTree {
+    /// The name of the remote.
+    pub remote_name: String,
     /// The name of the trunk branch.
     pub trunk_name: String,
     /// A map of branch names to [TrackedBranch]es.
@@ -22,13 +24,14 @@ pub struct StackTree {
 
 impl StackTree {
     /// Creates a new [StackTree] with the given trunk branch name.
-    pub fn new(trunk_name: String) -> Self {
+    pub fn new(remote_name: String, trunk_name: String) -> Self {
         let branches = HashMap::from([(
             trunk_name.clone(),
             TrackedBranch::new(trunk_name.clone(), None, None),
         )]);
 
         Self {
+            remote_name,
             trunk_name,
             branches,
         }
@@ -161,16 +164,6 @@ impl StackTree {
             .iter()
             .try_for_each(|child| self.fill_branches(child, branch_names))
     }
-
-    /// Gets all of the remote names in the stack graph.
-    pub fn remote_names(&self) -> StResult<Vec<String>> {
-        Ok(self
-            .branches
-            .values()
-            .filter_map(|b| b.remote.as_ref().map(|r| r.remote_name.clone()))
-            .flatten()
-            .collect())
-    }
 }
 
 /// A local branch tracked by `st`.
@@ -215,11 +208,9 @@ impl TrackedBranch {
 }
 
 /// Remote metadata for a branch that is tracked by `st`.
-#[derive(Default, Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct RemoteMetadata {
-    /// The name of the remote. Defaults to "origin" if not provided.
-    pub(crate) remote_name: Option<String>,
     /// The number of the pull request on GitHub associated with the branch.
     pub(crate) pr_number: u64,
     /// The comment ID of the stack status comment on the pull request.
@@ -231,9 +222,8 @@ pub struct RemoteMetadata {
 
 impl RemoteMetadata {
     /// Creates a new [RemoteMetadata] with the given PR number and comment ID.
-    pub fn new(remote_name: Option<String>, pr_number: u64) -> Self {
+    pub fn new(pr_number: u64) -> Self {
         Self {
-            remote_name,
             pr_number,
             comment_id: None,
         }
