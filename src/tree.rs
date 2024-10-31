@@ -106,6 +106,14 @@ impl StackTree {
     pub fn cleanup(&mut self) -> StResult<()> {
         // Remove all branches except the trunk branch
         self.branches.retain(|name, _| name == &self.trunk_name);
+
+        // Remove the children of the trunk branch
+        self.branches
+            .get_mut(&self.trunk_name)
+            .unwrap()
+            .children
+            .clear();
+
         Ok(())
     }
 
