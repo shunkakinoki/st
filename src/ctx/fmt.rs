@@ -84,9 +84,7 @@ impl StContext<'_> {
                 ""
             };
             let pull_request = current
-                .clone()
                 .remote
-                .clone()
                 .map(|r| {
                     let (owner, repo) = self.owner_and_repository()?;
                     Ok::<_, StError>(Color::Purple.italic().paint(format!(

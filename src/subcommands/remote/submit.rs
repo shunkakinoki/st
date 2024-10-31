@@ -39,7 +39,7 @@ impl SubmitCmd {
         // Submit the stack.
         println!(
             "\n🐙 Submitting changes to remote `{}`...",
-            Color::Blue.paint("origin")
+            Color::Blue.paint(&ctx.tree.remote_name)
         );
         self.submit_stack(&mut ctx, &mut pulls, &owner, &repo)
             .await?;
@@ -97,6 +97,8 @@ impl SubmitCmd {
         for (i, branch) in stack.iter().enumerate().skip(1) {
             let parent = &stack[i - 1];
 
+            let remote_name = ctx.tree.remote_name.clone();
+
             let tracked_branch = ctx
                 .tree
                 .get_mut(branch)
@@ -141,7 +143,8 @@ impl SubmitCmd {
                 }
 
                 // Push the branch to the remote.
-                ctx.repository.push_branch(branch, "origin", self.force)?;
+                ctx.repository
+                    .push_branch(branch, &remote_name, self.force)?;
 
                 // Print success message.
                 println!("Updated branch `{}` on remote.", Color::Green.paint(branch));
@@ -149,7 +152,8 @@ impl SubmitCmd {
                 // If the PR has not been submitted yet.
 
                 // Push the branch to the remote.
-                ctx.repository.push_branch(branch, "origin", self.force)?;
+                ctx.repository
+                    .push_branch(branch, &remote_name, self.force)?;
 
                 // Prompt the user for PR metadata.
                 let metadata = Self::prompt_pr_metadata(branch, parent)?;
