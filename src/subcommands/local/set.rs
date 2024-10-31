@@ -4,23 +4,40 @@ use crate::{ctx::StContext, errors::StResult};
 
 #[derive(Debug, Clone, Eq, PartialEq, clap::Args)]
 pub struct SetCmd {
-    /// The name of the remote to set.
-    #[clap(short, long = "remote")]
-    remote_name: Option<String>,
-    /// The username of the default assignee to use for new PRs.
-    #[clap(short, long = "assignee")]
-    default_assignee: Option<String>,
+    #[command(subcommand)]
+    command: SetCommands,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, clap::Subcommand)]
+pub enum SetCommands {
+    /// Set the remote name
+    Remote(RemoteArgs),
+    /// Set the default assignee
+    Assignee(AssigneeArgs),
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, clap::Args)]
+pub struct RemoteArgs {
+    /// The name of the remote to set
+    pub name: String,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, clap::Args)]
+pub struct AssigneeArgs {
+    /// The username of the default assignee
+    pub username: String,
 }
 
 impl SetCmd {
-    /// Run the `config` subcommand to force or allow configuration editing.
+    /// Run the `set` subcommand to force or allow configuration editing.
     pub fn run(self, mut ctx: StContext<'_>) -> StResult<()> {
-        if let Some(remote_name) = self.remote_name {
-            ctx.tree.remote_name = remote_name;
-        }
-
-        if let Some(default_assignee) = self.default_assignee {
-            ctx.cfg.default_assignee = Some(default_assignee);
+        match self.command {
+            SetCommands::Remote(args) => {
+                ctx.tree.remote_name = args.name;
+            }
+            SetCommands::Assignee(args) => {
+                ctx.cfg.default_assignee = Some(args.username);
+            }
         }
 
         Ok(())
