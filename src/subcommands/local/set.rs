@@ -5,8 +5,10 @@ use crate::{ctx::StContext, errors::StResult};
 #[derive(Debug, Clone, Eq, PartialEq, clap::Args)]
 pub struct SetCmd {
     /// The name of the remote to set.
+    #[clap(short, long = "remote")]
     remote_name: Option<String>,
     /// The username of the default assignee to use for new PRs.
+    #[clap(short, long = "assignee")]
     default_assignee: Option<String>,
 }
 
