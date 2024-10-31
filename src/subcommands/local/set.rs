@@ -34,6 +34,9 @@ impl SetCmd {
         match self.command {
             SetCommands::Remote(args) => {
                 if let Some(name) = args.name {
+                    if name == ctx.tree.remote_name {
+                        return Ok(());
+                    }
                     ctx.tree.remote_name = name;
                 } else {
                     ctx.tree.remote_name = prompt_for_remote_name(ctx.repository)?;
