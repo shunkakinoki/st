@@ -128,7 +128,7 @@ impl<'a> StContext<'a> {
 
     /// Resets the tracked branches in the context.
     pub fn reset_tracked_branches(&mut self) -> StResult<()> {
-        self.tree.branches()?.clear();
+        self.tree.branches.clear();
 
         println!("Reset tracked branches.");
 
