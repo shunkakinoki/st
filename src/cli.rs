@@ -74,7 +74,6 @@ impl Cli {
         );
 
         // Ask the user to specify the remote name for the repository.
-        // The default is "origin".
         let mut remote_names = repo
             .remotes()?
             .iter()
