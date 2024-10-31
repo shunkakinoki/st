@@ -69,41 +69,10 @@ impl Cli {
         }
 
         let setup_message = format!("Repo not configured with `{}`.", Blue.paint("st"));
-        let setup_remote_message = "Select the remote name for the repository.".to_string();
-        let setup_branch_message = "Select the trunk branch for the repository.".to_string();
-
         println!("{}", setup_message);
 
-        // Ask the user to specify the remote name for the repository.
-        let mut remote_names = repo
-            .remotes()?
-            .iter()
-            .map(|r| r.unwrap().to_string())
-            .collect::<Vec<_>>();
-        // If there is only one remote, select it by default.
-        let remote_name = if remote_names.len() == 1 {
-            remote_names[0].clone()
-        } else {
-            // If there is `origin`, move it to the first position.
-            if remote_names.contains(&"origin".to_string()) {
-                remote_names.remove(remote_names.iter().position(|r| r == "origin").unwrap());
-                remote_names.insert(0, "origin".to_string());
-            }
-            Select::new(&setup_remote_message, remote_names).prompt()?
-        };
-
-        // Ask the user to specify the trunk branch of the repository.
-        // The trunk branch must be a local branch.
-        let branches = repo
-            .branches(Some(BranchType::Local))?
-            .map(|b| {
-                let (b, _) = b?;
-                b.name()?
-                    .map(ToOwned::to_owned)
-                    .ok_or(StError::BranchUnavailable)
-            })
-            .collect::<StResult<Vec<_>>>()?;
-        let trunk_branch = Select::new(&setup_branch_message, branches).prompt()?;
+        let remote_name = prompt_for_remote_name(repo)?;
+        let trunk_branch = prompt_for_trunk_branch(repo)?;
 
         // Print the welcome message.
         println!(
@@ -148,4 +117,49 @@ const fn cli_styles() -> clap::builder::Styles {
                 .fg_color(Some(Color::Ansi(AnsiColor::Green))),
         )
         .placeholder(Style::new().fg_color(Some(Color::Ansi(AnsiColor::White))))
+}
+
+/// Prompt the user to select a remote name from the list of remotes.
+pub fn prompt_for_remote_name(repo: &Repository) -> StResult<String> {
+    let setup_remote_message = "Select the remote name for the repository.".to_string();
+
+    // Ask the user to specify the remote name for the repository.
+    let mut remote_names = repo
+        .remotes()?
+        .iter()
+        .map(|r| r.unwrap().to_string())
+        .collect::<Vec<_>>();
+    // If there is only one remote, select it by default.
+    let remote_name = if remote_names.len() == 1 {
+        remote_names[0].clone()
+    } else {
+        // If there is `origin`, move it to the first position.
+        if remote_names.contains(&"origin".to_string()) {
+            remote_names.remove(remote_names.iter().position(|r| r == "origin").unwrap());
+            remote_names.insert(0, "origin".to_string());
+        }
+        Select::new(&setup_remote_message, remote_names).prompt()?
+    };
+
+    Ok(remote_name)
+}
+
+/// Prompt the user to select a trunk branch from the list of local branches.
+pub fn prompt_for_trunk_branch(repo: &Repository) -> StResult<String> {
+    let setup_branch_message = "Select the trunk branch for the repository.".to_string();
+
+    // Ask the user to specify the trunk branch of the repository.
+    // The trunk branch must be a local branch.
+    let branches = repo
+        .branches(Some(BranchType::Local))?
+        .map(|b| {
+            let (b, _) = b?;
+            b.name()?
+                .map(ToOwned::to_owned)
+                .ok_or(StError::BranchUnavailable)
+        })
+        .collect::<StResult<Vec<_>>>()?;
+    let trunk_branch = Select::new(&setup_branch_message, branches).prompt()?;
+
+    Ok(trunk_branch)
 }

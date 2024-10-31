@@ -1,6 +1,6 @@
 //! `config` subcommand.
 
-use crate::{ctx::StContext, errors::StResult};
+use crate::{cli::prompt_for_remote_name, ctx::StContext, errors::StResult};
 
 #[derive(Debug, Clone, Eq, PartialEq, clap::Args)]
 pub struct SetCmd {
@@ -19,7 +19,7 @@ pub enum SetCommands {
 #[derive(Debug, Clone, Eq, PartialEq, clap::Args)]
 pub struct RemoteArgs {
     /// The name of the remote to set
-    pub name: String,
+    pub name: Option<String>,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, clap::Args)]
@@ -33,7 +33,11 @@ impl SetCmd {
     pub fn run(self, mut ctx: StContext<'_>) -> StResult<()> {
         match self.command {
             SetCommands::Remote(args) => {
-                ctx.tree.remote_name = args.name;
+                if let Some(name) = args.name {
+                    ctx.tree.remote_name = name;
+                } else {
+                    ctx.tree.remote_name = prompt_for_remote_name(ctx.repository)?;
+                }
             }
             SetCommands::Assignee(args) => {
                 ctx.cfg.default_assignee = Some(args.username);
