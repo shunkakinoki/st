@@ -5,7 +5,7 @@ use clap::Subcommand;
 
 mod local;
 use local::{
-    CheckoutCmd, ConfigCmd, CreateCmd, DeleteCmd, LogCmd, RestackCmd, TrackCmd, UntrackCmd,
+    CheckoutCmd, ConfigCmd, CreateCmd, DeleteCmd, LogCmd, RestackCmd, SetCmd, TrackCmd, UntrackCmd,
 };
 
 mod remote;
@@ -46,6 +46,9 @@ pub enum Subcommands {
     /// Configure the st application.
     #[clap(visible_alias = "cfg")]
     Config(ConfigCmd),
+    /// Set the remote name and default assignee.
+    #[clap(visible_alias = "set")]
+    Set(SetCmd),
 }
 
 impl Subcommands {
@@ -65,6 +68,7 @@ impl Subcommands {
             Self::Track(args) => args.run(ctx),
             Self::Untrack(args) => args.run(ctx),
             Self::Config(args) => args.run(ctx),
+            Self::Set(args) => args.run(ctx),
         }
     }
 }

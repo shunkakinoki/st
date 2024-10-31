@@ -28,6 +28,7 @@ impl SubmitCmd {
             .build()?;
         let (owner, repo) = ctx.owner_and_repository()?;
         let mut pulls = gh_client.pulls(&owner, &repo);
+        let mut issues = gh_client.issues(&owner, &repo);
 
         // Resolve the active stack.
         let stack = ctx.discover_stack()?;
@@ -41,7 +42,7 @@ impl SubmitCmd {
             "\n🐙 Submitting changes to remote `{}`...",
             Color::Blue.paint(&ctx.tree.remote_name)
         );
-        self.submit_stack(&mut ctx, &mut pulls, &owner, &repo)
+        self.submit_stack(&mut ctx, &mut pulls, &mut issues, &owner, &repo)
             .await?;
 
         // Update the stack navigation comments on the PRs.
@@ -88,6 +89,7 @@ impl SubmitCmd {
         &self,
         ctx: &mut StContext<'_>,
         pulls: &mut PullRequestHandler<'_>,
+        issues: &mut IssueHandler<'_>,
         owner: &str,
         repo: &str,
     ) -> StResult<()> {
@@ -165,6 +167,15 @@ impl SubmitCmd {
                     .draft(metadata.is_draft)
                     .send()
                     .await?;
+
+                // Assign the PR to the user.
+                if let Some(assignee) = &ctx.cfg.default_assignee {
+                    issues
+                        .update(pr_info.number)
+                        .assignees(&[assignee.clone()])
+                        .send()
+                        .await?;
+                }
 
                 // Update the tracked branch with the remote information.
                 tracked_branch.remote = Some(RemoteMetadata::new(pr_info.number));

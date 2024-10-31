@@ -20,6 +20,9 @@ github_token = """#;
 pub struct StConfig {
     /// GitHub personal access token.
     pub github_token: String,
+    /// The username of the default assignee to use for new PRs.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_assignee: Option<String>,
 }
 
 impl StConfig {
@@ -50,6 +53,7 @@ impl StConfig {
                                 // Create new config with the token
                                 return Ok(Some(Self {
                                     github_token: token,
+                                    default_assignee: None,
                                 }));
                             }
                         }
