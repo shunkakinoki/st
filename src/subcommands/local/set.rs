@@ -33,13 +33,14 @@ impl SetCmd {
     pub fn run(self, mut ctx: StContext<'_>) -> StResult<()> {
         match self.command {
             SetCommands::Remote(args) => {
-                if let Some(name) = args.name {
-                    if name == ctx.tree.remote_name {
-                        return Ok(());
-                    }
-                    ctx.tree.remote_name = name;
+                let new_remote_name = if let Some(name) = args.name {
+                    name
                 } else {
-                    ctx.tree.remote_name = prompt_for_remote_name(ctx.repository)?;
+                    prompt_for_remote_name(ctx.repository)?
+                };
+
+                if new_remote_name == ctx.tree.remote_name {
+                    return Ok(());
                 }
 
                 // Reset tracked branches
