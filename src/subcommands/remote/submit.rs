@@ -95,6 +95,9 @@ impl SubmitCmd {
     ) -> StResult<()> {
         let stack = ctx.discover_stack()?;
 
+        // Prompt the user for the assignee of the PR if not initialized.
+        Self::prompt_for_assignee(ctx)?;
+
         // Iterate over the stack and submit PRs.
         for (i, branch) in stack.iter().enumerate().skip(1) {
             let parent = &stack[i - 1];
@@ -240,6 +243,15 @@ impl SubmitCmd {
                         .comment_id = Some(comment_info.id.0);
                 }
             }
+        }
+        Ok(())
+    }
+
+    /// Prompts the user for the assignee of the PR if not initialized. (Set as "none" if not initialized.)
+    fn prompt_for_assignee(ctx: &mut StContext<'_>) -> StResult<()> {
+        if ctx.cfg.default_assignee.is_none() {
+            let assignee = inquire::Text::new("Assignee (default: none)").prompt()?;
+            ctx.cfg.default_assignee = Some(assignee.clone());
         }
         Ok(())
     }
