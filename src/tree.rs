@@ -102,6 +102,13 @@ impl StackTree {
         Ok(())
     }
 
+    /// Cleans up the stack tree by removing any branches that do not exist in the repository.
+    pub fn cleanup(&mut self) -> StResult<()> {
+        // Remove all branches except the trunk branch
+        self.branches.retain(|name, _| name == &self.trunk_name);
+        Ok(())
+    }
+
     /// Deletes a branch from the stack graph. If the branch does not exist, returns [None].
     ///
     /// ## Takes
@@ -150,6 +157,10 @@ impl StackTree {
     /// Returns a vector of branch names in the stack graph. The vector is filled recursively, meaning that children are
     /// guaranteed to be listed after their parents.
     pub fn branches(&self) -> StResult<Vec<String>> {
+        if self.branches.is_empty() {
+            return Ok(vec![]);
+        }
+
         let mut branch_names = Vec::new();
         self.fill_branches(&self.trunk_name, &mut branch_names)?;
         Ok(branch_names)
