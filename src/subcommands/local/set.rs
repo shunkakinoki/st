@@ -41,6 +41,9 @@ impl SetCmd {
                 } else {
                     ctx.tree.remote_name = prompt_for_remote_name(ctx.repository)?;
                 }
+
+                // Reset tracked branches
+                ctx.reset_tracked_branches()?;
             }
             SetCommands::Assignee(args) => {
                 ctx.cfg.default_assignee = Some(args.username);

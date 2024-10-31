@@ -125,6 +125,12 @@ impl<'a> StContext<'a> {
             Ok::<_, StError>(())
         })
     }
+
+    /// Resets the tracked branches in the context.
+    pub fn reset_tracked_branches(&mut self) -> StResult<()> {
+        self.tree.branches()?.clear();
+        Ok(())
+    }
 }
 
 impl Drop for StContext<'_> {
