@@ -195,10 +195,8 @@ impl SubmitCmd {
                 }
 
                 // Update the tracked branch with the remote information.
-                tracked_branch.remote = Some(RemoteMetadata::new(
-                    pr_info.number,
-                    Some(target_remote_name),
-                ));
+                tracked_branch.remote =
+                    Some(RemoteMetadata::new(pr_info.number, target_remote_name));
 
                 // Print success message.
                 let pr_link = format!(
@@ -225,7 +223,7 @@ impl SubmitCmd {
         // Get the children of the current branch.
         if let Some(tracked_branch) = ctx.tree.branches.get(branch) {
             // If any children have PRs, use their remote name.
-            if let Some(Some(remote_name)) = tracked_branch.children.iter().find_map(|child| {
+            if let Some(remote_name) = tracked_branch.children.iter().find_map(|child| {
                 ctx.tree
                     .branches
                     .get(child)

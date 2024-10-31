@@ -44,13 +44,7 @@ impl StatusCmd {
             });
 
             if let Some(remote) = &tracked_branch.remote {
-                let (owner, repo) = ctx.owner_and_repository(
-                    remote
-                        .remote_name
-                        .as_ref()
-                        .unwrap_or(&ctx.tree.remote_name)
-                        .clone(),
-                )?;
+                let (owner, repo) = ctx.owner_and_repository(remote.remote_name.clone())?;
                 let pulls = gh_client.pulls(&owner, &repo);
 
                 let pr_info = pulls.get(remote.pr_number).await?;

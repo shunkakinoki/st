@@ -238,8 +238,8 @@ pub struct RemoteMetadata {
     /// The number of the pull request on GitHub associated with the branch.
     pub(crate) pr_number: u64,
     /// The name of the remote that the pull request is associated with.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) remote_name: Option<String>,
+    #[serde(default = "default_remote_name")]
+    pub(crate) remote_name: String,
     /// The comment ID of the stack status comment on the pull request.
     ///
     /// This is used to update the comment with the latest stack status each time the stack
@@ -249,7 +249,7 @@ pub struct RemoteMetadata {
 
 impl RemoteMetadata {
     /// Creates a new [RemoteMetadata] with the given PR number and comment ID.
-    pub fn new(pr_number: u64, remote_name: Option<String>) -> Self {
+    pub fn new(pr_number: u64, remote_name: String) -> Self {
         Self {
             pr_number,
             remote_name,
