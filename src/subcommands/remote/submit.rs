@@ -50,7 +50,7 @@ impl SubmitCmd {
 
         // Update the stack navigation comments on the PRs.
         println!("\n📝 Updating stack navigation comments...");
-        self.update_pr_comments(&mut ctx, gh_client.issues(owner, repo), &stack)
+        self.update_pr_comments(&mut ctx, &mut issues, &stack)
             .await?;
 
         println!("\n🧙💫 All pull requests up to date.");
@@ -257,7 +257,7 @@ impl SubmitCmd {
     async fn update_pr_comments(
         &self,
         ctx: &mut StContext<'_>,
-        issue_handler: IssueHandler<'_>,
+        issues: &mut IssueHandler<'_>,
         stack: &[String],
     ) -> StResult<()> {
         for branch in stack.iter().skip(1) {
@@ -282,15 +282,13 @@ impl SubmitCmd {
             match comment_id {
                 Some(id) => {
                     // Update the existing comment.
-                    issue_handler
+                    issues
                         .update_comment(CommentId(id), rendered_comment)
                         .await?;
                 }
                 None => {
                     // Create a new comment.
-                    let comment_info = issue_handler
-                        .create_comment(pr_number, rendered_comment)
-                        .await?;
+                    let comment_info = issues.create_comment(pr_number, rendered_comment).await?;
 
                     // Get a new mutable reference to the branch and update the comment ID.
                     ctx.tree
