@@ -249,10 +249,10 @@ pub struct RemoteMetadata {
 
 impl RemoteMetadata {
     /// Creates a new [RemoteMetadata] with the given PR number and comment ID.
-    pub fn new(pr_number: u64) -> Self {
+    pub fn new(pr_number: u64, remote_name: Option<String>) -> Self {
         Self {
             pr_number,
-            remote_name: None,
+            remote_name,
             comment_id: None,
         }
     }

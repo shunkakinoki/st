@@ -195,7 +195,8 @@ impl SubmitCmd {
                 }
 
                 // Update the tracked branch with the remote information.
-                tracked_branch.remote = Some(RemoteMetadata::new(pr_info.number));
+                tracked_branch.remote =
+                    Some(RemoteMetadata::new(pr_info.number, target_remote_name));
 
                 // Print success message.
                 let pr_link = format!(
@@ -233,7 +234,14 @@ impl SubmitCmd {
             }
         }
 
-        Ok(String::new())
+        // Check if the repository is a fork of the default remote.
+        // let (owner, _) = ctx.owner_and_repository(ctx.tree.remote_name.clone())?;
+        // if owner != ctx.cfg.github_user {
+        //     return Ok(ctx.tree.remote_name.clone());
+        // }
+
+        // Otherwise, use the default remote name.
+        Ok(ctx.tree.remote_name.clone())
     }
 
     /// Updates the comments on a PR with the current stack information.
