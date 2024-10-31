@@ -68,10 +68,11 @@ impl Cli {
             return Ok(ctx);
         }
 
-        let setup_message = format!(
-            "Repo not configured with `{}`. Select the remote name for the repository.",
-            Blue.paint("st")
-        );
+        let setup_message = format!("Repo not configured with `{}`.", Blue.paint("st"));
+        let setup_remote_message = "Select the remote name for the repository.".to_string();
+        let setup_branch_message = "Select the trunk branch for the repository.".to_string();
+
+        println!("{}", setup_message);
 
         // Ask the user to specify the remote name for the repository.
         let mut remote_names = repo
@@ -88,10 +89,8 @@ impl Cli {
                 remote_names.remove(remote_names.iter().position(|r| r == "origin").unwrap());
                 remote_names.insert(0, "origin".to_string());
             }
-            Select::new(&setup_message, remote_names).prompt()?
+            Select::new(&setup_remote_message, remote_names).prompt()?
         };
-
-        let setup_branch_message = "Select the trunk branch for the repository.".to_string();
 
         // Ask the user to specify the trunk branch of the repository.
         // The trunk branch must be a local branch.
