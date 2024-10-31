@@ -17,6 +17,9 @@ pub struct SubmitCmd {
     /// Force the submission of the stack, analogous to `git push --force`.
     #[clap(long, short)]
     force: bool,
+    /// Target remote to submit the stack to.
+    #[clap(long)]
+    target_remote: Option<String>,
 }
 
 impl SubmitCmd {
@@ -106,7 +109,7 @@ impl SubmitCmd {
             let remote_name = ctx.tree.remote_name.clone();
 
             // Determine the target `head` remote.
-            let target_remote_name = Self::determine_target_pr_remote(ctx, branch)?;
+            let target_remote_name = self.determine_target_pr_remote(ctx, branch)?;
 
             // Get the tracked branch.
             let (target_owner, _) = ctx.owner_and_repository(target_remote_name.clone())?;
@@ -217,9 +220,10 @@ impl SubmitCmd {
     /// Deteremines the target remote for submitting the stack.
     ///
     /// 1. If one of the children of the current branch is already submitted as a PR, use the remote name associated with that PR.
-    /// 2. Otherwise, check if the repository is a fork of the default remote. If so, use that remote name.
-    /// 3. Otherwise, use the default remote name.
-    fn determine_target_pr_remote(ctx: &StContext<'_>, branch: &String) -> StResult<String> {
+    /// 2. If the `--target-remote` flag is provided, use that remote name.
+    /// 3. Otherwise, check if the repository is a fork of the default remote. If so, use that remote name.
+    /// 4. Otherwise, use the default remote name.
+    fn determine_target_pr_remote(&self, ctx: &StContext<'_>, branch: &String) -> StResult<String> {
         // Get the children of the current branch.
         if let Some(tracked_branch) = ctx.tree.branches.get(branch) {
             // If any children have PRs, use their remote name.
@@ -232,6 +236,11 @@ impl SubmitCmd {
             }) {
                 return Ok(remote_name.clone());
             }
+        }
+
+        // Check if the `--target-remote` flag is provided.
+        if let Some(target_remote) = &self.target_remote {
+            return Ok(target_remote.clone());
         }
 
         // Check if the repository is a fork of the default remote.
